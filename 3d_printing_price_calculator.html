@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Printing Price Calculator</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172033;background:#f4f6fa}
+*{box-sizing:border-box}body{margin:0;padding:24px}.wrap{max-width:1050px;margin:auto}
+header{margin:8px 0 22px}h1{font-size:clamp(1.6rem,4vw,2.2rem);margin:0 0 8px}.sub{color:#64748b;margin:0}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.panel{background:white;border:1px solid #e3e8f0;border-radius:16px;padding:20px;box-shadow:0 5px 20px #15223b0a}
+h2{font-size:1.05rem;margin:0 0 14px}.section{padding:15px 0;border-top:1px solid #edf0f5}.section:first-of-type{border-top:0;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;font-size:.82rem;font-weight:600;color:#475569;margin-bottom:6px}
+input{width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:9px;font:inherit;background:#fff;color:#172033}
+input:focus{outline:2px solid #93c5fd;border-color:#3b82f6}
+small,.hint{color:#64748b;font-size:.78rem;line-height:1.45}
+.result{position:sticky;top:18px}.price{font-size:2.6rem;font-weight:800;letter-spacing:-.04em;margin:3px 0 2px;color:#0f766e}
+.metric{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #edf0f5;font-size:.9rem}.metric strong{font-variant-numeric:tabular-nums}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.pill{border:1px solid #cbd5e1;border-radius:999px;padding:7px 12px;background:#fff;cursor:pointer}.pill.active{background:#e0f2fe;border-color:#0284c7;color:#075985}
+button{font:inherit}.reset{margin-top:16px;border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;background:#fff;cursor:pointer}
+.note{background:#f8fafc;border-radius:10px;padding:11px;margin-top:13px;color:#475569;font-size:.8rem;line-height:1.5}
+@media(max-width:760px){body{padding:14px}.layout{grid-template-columns:1fr}.result{position:static}.grid{gap:10px}}
+</style>
+</head>
+<body><main class="wrap">
+<header><h1>3D Printing Price Calculator</h1><p class="sub">Calculate your real cost per print, recommended selling price and profit.</p></header>
+<div class="layout">
+<section class="panel">
+<h2>Print and business inputs</h2>
+<div class="section"><h2>1. Filament</h2><div class="grid">
+<div><label for="grams">Filament used (g)</label><input id="grams" type="number" min="0" step="0.1" value="19"></div>
+<div><label for="kgPrice">Filament price (€/kg)</label><input id="kgPrice" type="number" min="0" step="0.01" value="12"></div>
+<div><label for="waste">Extra material / waste (%)</label><input id="waste" type="number" min="0" step="0.5" value="5"></div>
+<div><label for="packaging">Packaging per order (€)</label><input id="packaging" type="number" min="0" step="0.01" value="0.50"></div>
+</div></div>
+<div class="section"><h2>2. Electricity</h2><div class="grid">
+<div><label for="rate">Electricity price (€/kWh)</label><input id="rate" type="number" min="0" step="0.0001" value="0.3381"></div>
+<div><label for="watts">Average printer power (W)</label><input id="watts" type="number" min="0" step="1" value="200"></div>
+<div><label for="hours">Print duration (hours)</label><input id="hours" type="number" min="0" step="0.1" value="3"></div>
+</div><p class="hint">Your EINS Arbeitspreis entered: 33.81 ct/kWh = €0.3381/kWh. Replace it if your contract shows a different rate.</p></div>
+<div class="section"><h2>3. Monthly printer costs</h2><div class="grid">
+<div><label for="maintenance">Maintenance reserve / month (€)</label><input id="maintenance" type="number" min="0" step="0.01" value="15"></div>
+<div><label for="depreciation">Printer depreciation / month (€)</label><input id="depreciation" type="number" min="0" step="0.01" value="20"></div>
+<div><label for="monthlyPrints">Expected completed prints / month</label><input id="monthlyPrints" type="number" min="1" step="1" value="30"></div>
+<div><label for="fixed">Other fixed business costs / month (€)</label><input id="fixed" type="number" min="0" step="0.01" value="0"></div>
+</div><p class="hint">Monthly costs are divided by expected completed prints. Include spare parts, nozzle/build-plate replacement and printer wear in maintenance.</p></div>
+<div class="section"><h2>4. Your time and selling fees</h2><div class="grid">
+<div><label for="minutes">Hands-on labour (minutes)</label><input id="minutes" type="number" min="0" step="1" value="0"></div>
+<div><label for="hourly">Your labour rate (€/hour)</label><input id="hourly" type="number" min="0" step="0.5" value="12"></div>
+<div><label for="fees">Marketplace/payment fee (%)</label><input id="fees" type="number" min="0" max="99" step="0.1" value="0"></div>
+</div></div>
+<div class="section"><h2>5. Target profit margin</h2><div class="pills" id="marginPills">
+<button class="pill" data-margin="50">50%</button><button class="pill active" data-margin="60">60%</button><button class="pill" data-margin="70">70%</button>
+</div><label for="margin">Custom target margin (%)</label><input id="margin" type="number" min="0" max="89" step="1" value="60">
+<p class="hint">Margin means profit as a percentage of the selling price, after the selling fee and all entered costs. This is not the same as markup.</p></div>
+<button class="reset" id="reset">Reset to example values</button>
+</section>
+<aside class="panel result">
+<h2>Recommended selling price</h2><div class="price" id="price">€—</div><div class="hint" id="priceNote">Based on your selected target margin</div>
+<div class="pills"><button class="pill" data-margin="50">50% margin</button><button class="pill" data-margin="60">60% margin</button><button class="pill" data-margin="70">70% margin</button></div>
+<div class="metric"><span>Filament + waste</span><strong id="filamentOut">—</strong></div>
+<div class="metric"><span>Electricity</span><strong id="electricityOut">—</strong></div>
+<div class="metric"><span>Maintenance allocation</span><strong id="maintenanceOut">—</strong></div>
+<div class="metric"><span>Printer depreciation</span><strong id="depreciationOut">—</strong></div>
+<div class="metric"><span>Other fixed costs</span><strong id="fixedOut">—</strong></div>
+<div class="metric"><span>Packaging</span><strong id="packagingOut">—</strong></div>
+<div class="metric"><span>Labour</span><strong id="labourOut">—</strong></div>
+<div class="metric"><strong>Total cost per print</strong><strong id="costOut">—</strong></div>
+<div class="metric"><span>Selling/platform fee</span><strong id="feeOut">—</strong></div>
+<div class="metric"><strong>Profit per print</strong><strong id="profitOut">—</strong></div>
+<div class="metric"><strong>Actual profit margin</strong><strong id="actualMargin">—</strong></div>
+<div class="note" id="warning">Enter your printer's measured average power for a more accurate electricity estimate. Rated maximum power is not necessarily average power during a print.</div>
+</aside></div>
+<p class="hint" style="margin:18px 2px">Estimate only. VAT, income tax, shipping, design time, customer acquisition and returns are not included unless entered. If a print fails, account for the extra material/time using the waste percentage or a separate failure reserve.</p>
+</main>
+<script>
+const ids=['grams','kgPrice','waste','packaging','rate','watts','hours','maintenance','depreciation','monthlyPrints','fixed','minutes','hourly','fees','margin'];
+const el=id=>document.getElementById(id), val=id=>Math.max(0,Number(el(id).value)||0), euro=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
+function calc(){
+ const g=val('grams'), kg=val('kgPrice'), waste=val('waste'), rate=val('rate'), watts=val('watts'), hours=val('hours');
+ const count=val('monthlyPrints'), fee=val('fees')/100, margin=val('margin')/100;
+ const filament=g*kg/1000*(1+waste/100), electricity=watts/1000*hours*rate;
+ const maintenance=count?val('maintenance')/count:0, depreciation=count?val('depreciation')/count:0, fixed=count?val('fixed')/count:0;
+ const packaging=val('packaging'), labour=val('minutes')/60*val('hourly');
+ const cost=filament+electricity+maintenance+depreciation+fixed+packaging+labour;
+ const denominator=1-fee-margin, price=denominator>0?cost/denominator:NaN;
+ const sellingFee=Number.isFinite(price)?price*fee:NaN, profit=Number.isFinite(price)?price-sellingFee-cost:NaN;
+ el('price').textContent=Number.isFinite(price)?euro(price):'Check margin/fee';
+ el('priceNote').textContent=Number.isFinite(price)?`Target margin: ${(margin*100).toFixed(0)}% · Fee: ${(fee*100).toFixed(1)}%`:'Margin + fee must be below 100%.';
+ for(const [id,n] of Object.entries({filamentOut:filament,electricityOut:electricity,maintenanceOut:maintenance,depreciationOut:depreciation,fixedOut:fixed,packagingOut:packaging,labourOut:labour,costOut:cost,feeOut:sellingFee,profitOut:profit}))el(id).textContent=Number.isFinite(n)?euro(n):'—';
+ el('actualMargin').textContent=Number.isFinite(price)&&price>0?`${(profit/price*100).toFixed(1)}%`:'—';
+}
+ids.forEach(id=>el(id).addEventListener('input',calc));
+document.querySelectorAll('[data-margin]').forEach(b=>b.addEventListener('click',()=>{el('margin').value=b.dataset.margin;document.querySelectorAll('[data-margin]').forEach(x=>x.classList.toggle('active',x.dataset.margin===b.dataset.margin));calc()}));
+el('reset').addEventListener('click',()=>{const d={grams:19,kgPrice:12,waste:5,packaging:.5,rate:.3381,watts:200,hours:3,maintenance:15,depreciation:20,monthlyPrints:30,fixed:0,minutes:0,hourly:12,fees:0,margin:60};Object.entries(d).forEach(([k,v])=>el(k).value=v);document.querySelectorAll('[data-margin]').forEach(x=>x.classList.toggle('active',x.dataset.margin==='60'));calc()});
+calc();
+</script></body></html>
